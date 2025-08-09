@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Search, Menu, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,14 +14,14 @@ export const Header = ({ onSearch, onAddApp }: HeaderProps) => {
       <div className="container flex h-16 items-center justify-between px-6">
         {/* Logo */}
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <span className="text-sm font-bold text-white">K</span>
+              <span className="text-sm font-bold text-white">R</span>
             </div>
             <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              KPPM
+              Replicate Hub
             </span>
-          </div>
+          </Link>
         </div>
 
         {/* Search */}

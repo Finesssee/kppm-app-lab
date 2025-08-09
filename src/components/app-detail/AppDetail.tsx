@@ -1,4 +1,7 @@
+'use client'
+
 import { useState } from "react";
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, ExternalLink, Star, Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,10 +13,10 @@ import { toast } from "sonner";
 
 interface AppDetailProps {
   app: AppManifest;
-  onBack: () => void;
 }
 
-export const AppDetail = ({ app, onBack }: AppDetailProps) => {
+export const AppDetail = ({ app }: AppDetailProps) => {
+  const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<any>(null);
 
@@ -52,7 +55,7 @@ export const AppDetail = ({ app, onBack }: AppDetailProps) => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon" onClick={onBack}>
+              <Button variant="ghost" size="icon" onClick={() => router.push('/')}>
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="flex items-center space-x-3">

@@ -1,13 +1,14 @@
+'use client'
+
 import { useState, useMemo } from "react";
-import { Header } from "@/components/layout/Header";
+import { useRouter } from 'next/navigation'
 import { CategoryFilter } from "./CategoryFilter";
 import { AppCard } from "./AppCard";
-import { AppDetail } from "@/components/app-detail/AppDetail";
 import { mockApps, mockCategories } from "@/data/mockApps";
 import { AppManifest } from "@/types/app";
 
 export const AppLibrary = () => {
-  const [selectedApp, setSelectedApp] = useState<AppManifest | null>(null);
+  const router = useRouter()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -33,23 +34,14 @@ export const AppLibrary = () => {
     return filtered;
   }, [selectedCategory, searchQuery]);
 
-  if (selectedApp) {
-    return (
-      <AppDetail
-        app={selectedApp}
-        onBack={() => setSelectedApp(null)}
-      />
-    );
+  const handleAppSelect = (app: AppManifest) => {
+    router.push(`/apps/${app.id}`)
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header
-        onSearch={setSearchQuery}
-        onAddApp={() => console.log("Add app clicked")}
-      />
+    <>
 
-      <main className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-6 py-8">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <div className="bg-gradient-hero rounded-2xl p-12 text-white mb-8">
@@ -105,7 +97,7 @@ export const AppLibrary = () => {
               <div key={app.id} className="animate-fade-in">
                 <AppCard
                   app={app}
-                  onSelect={setSelectedApp}
+                  onSelect={handleAppSelect}
                 />
               </div>
             ))}
@@ -128,7 +120,7 @@ export const AppLibrary = () => {
             </button>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </>
   );
 };
