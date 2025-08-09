@@ -194,12 +194,8 @@ type InputType =
 
 ## Next Implementation Phases
 
-### Phase 2: Deployment System (Planned)
-- User authentication with Supabase Auth
-- One-click deployment flow to Replicate
-- User-scoped deployments tracking
-- Prediction runs with streaming results
-- Error handling and retry logic
+### Phase 2: Deployment System (Completed)
+- **Implemented**: User authentication, one-click Replicate deployments, user-scoped deployment tracking, and prediction runs with history.
 
 ### Phase 3: Creator Features (Planned)
 - App submission system
