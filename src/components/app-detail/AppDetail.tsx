@@ -1,15 +1,14 @@
 'use client'
 
-import { useState } from "react";
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, ExternalLink, Star, Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DynamicForm } from "@/components/forms/DynamicForm";
 import { AppManifest } from "@/types/app";
-import { toast } from "sonner";
+import { useAuth } from '@/hooks/use-auth'
+import { DeployButton } from '@/components/deploy/DeployButton'
 
 interface AppDetailProps {
   app: AppManifest;
@@ -17,36 +16,7 @@ interface AppDetailProps {
 
 export const AppDetail = ({ app }: AppDetailProps) => {
   const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [result, setResult] = useState<any>(null);
-
-  const handleFormSubmit = async (formData: Record<string, any>) => {
-    setIsSubmitting(true);
-    
-    try {
-      // Simulate API call to Replicate
-      console.log("Submitting form data:", formData);
-      
-      // Mock response after delay
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const mockResult = {
-        id: "mock-result-id",
-        status: "completed",
-        output: "https://replicate.delivery/mock-output.png",
-        created_at: new Date().toISOString()
-      };
-      
-      setResult(mockResult);
-      toast.success("App executed successfully!");
-      
-    } catch (error) {
-      toast.error("Failed to execute app. Please try again.");
-      console.error("Error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const { session } = useAuth()
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,10 +44,7 @@ export const AppDetail = ({ app }: AppDetailProps) => {
                 <Share2 className="h-4 w-4 mr-2" />
                 Share
               </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Clone
-              </Button>
+              {session?.user && <DeployButton app={app} />}
             </div>
           </div>
         </div>
@@ -87,56 +54,12 @@ export const AppDetail = ({ app }: AppDetailProps) => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            <Tabs defaultValue="form" className="w-full">
+            <Tabs defaultValue="about" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="form">Try App</TabsTrigger>
                 <TabsTrigger value="about">About</TabsTrigger>
+                <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="examples">Examples</TabsTrigger>
               </TabsList>
-              
-              <TabsContent value="form" className="mt-6">
-                <DynamicForm
-                  schema={app.form_schema}
-                  onSubmit={handleFormSubmit}
-                  isLoading={isSubmitting}
-                />
-                
-                {/* Results */}
-                {result && (
-                  <Card className="mt-6">
-                    <CardHeader>
-                      <CardTitle>Result</CardTitle>
-                      <CardDescription>Your app has finished processing</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="p-4 bg-muted rounded-lg">
-                          <p className="text-sm font-medium mb-2">Output:</p>
-                          {result.output?.includes('http') ? (
-                            <img 
-                              src={result.output} 
-                              alt="Generated result" 
-                              className="max-w-full h-auto rounded-lg border"
-                            />
-                          ) : (
-                            <pre className="text-sm whitespace-pre-wrap">{result.output}</pre>
-                          )}
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs text-muted-foreground">
-                            Generated at {new Date(result.created_at).toLocaleString()}
-                          </p>
-                          <Button variant="outline" size="sm">
-                            <Download className="h-4 w-4 mr-2" />
-                            Download
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
               
               <TabsContent value="about" className="mt-6">
                 <Card>
@@ -144,14 +67,27 @@ export const AppDetail = ({ app }: AppDetailProps) => {
                     <CardTitle>About This App</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold mb-2">Description</h3>
-                      <p className="text-muted-foreground">{app.description}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-semibold mb-2">Details</h3>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
+                    <p className="text-muted-foreground">{app.description}</p>
+                    {session?.user ? (
+                      <div className="pt-4 border-t">
+                        <p className="text-sm">Click the "Deploy & Run" button in the header to get started.</p>
+                      </div>
+                    ) : (
+                      <div className="pt-4 border-t">
+                        <p className="text-sm text-muted-foreground">Please sign in to deploy and run this app.</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="details" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-muted-foreground">Version:</span>
                           <span className="ml-2 font-medium">v{app.version}</span>
@@ -171,16 +107,17 @@ export const AppDetail = ({ app }: AppDetailProps) => {
                           </span>
                         </div>
                       </div>
-                    </div>
 
                     {app.replicate_model && (
                       <div>
-                        <h3 className="font-semibold mb-2">AI Model</h3>
+                        <h3 className="font-semibold mb-2 mt-4">AI Model</h3>
                         <div className="flex items-center space-x-2">
                           <Badge variant="outline">{app.replicate_model}</Badge>
-                          <Button variant="ghost" size="sm">
-                            <ExternalLink className="h-4 w-4 mr-1" />
-                            View on Replicate
+                          <Button variant="ghost" size="sm" asChild>
+                            <a href={`https://replicate.com/${app.replicate_model}`} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-4 w-4 mr-1" />
+                              View on Replicate
+                            </a>
                           </Button>
                         </div>
                       </div>

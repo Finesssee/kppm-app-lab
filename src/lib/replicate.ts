@@ -3,6 +3,8 @@ import 'server-only'
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN
 const REPLICATE_API_URL = 'https://api.replicate.com'
 
+export const RetryableStatusCodes = [429] // Too Many Requests
+
 // Types
 export type DeploymentCreateReq = {
   name: string
@@ -78,8 +80,12 @@ async function withRetry<T>(
     } catch (error: any) {
       lastError = error
       
-      // Don't retry on client errors (4xx) except 429
-      if (error.status >= 400 && error.status < 500 && error.status !== 429) {
+      // Don't retry on client errors (4xx) except for specified ones
+      if (
+        error.status >= 400 &&
+        error.status < 500 &&
+        !RetryableStatusCodes.includes(error.status)
+      ) {
         throw error
       }
       
@@ -176,6 +182,25 @@ export async function updateDeployment(
       }
     )
     
+    return response.json()
+  })
+}
+
+// Delete a deployment
+export async function deleteDeployment(ref: DeploymentRef) {
+  return withRetry(async () => {
+    const response = await replicateFetch(
+      `/v1/deployments/${ref.owner}/${ref.name}`,
+      {
+        method: 'DELETE',
+      }
+    )
+
+    // DELETE returns 204 No Content, so no body to parse
+    if (response.status === 204) {
+      return null
+    }
+
     return response.json()
   })
 }
