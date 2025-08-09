@@ -24,6 +24,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Key Files Added/Modified
 - `supabase/migrations/002_core_library.sql` - Stats and search indexes
 - `src/lib/db.ts` - Server-side Supabase client
+- `src/lib/auth.ts` - BetterAuth integration and JWT signing
+- `src/providers/AuthProvider.tsx` - Authentication context provider
+- `src/hooks/useAuth.ts` - Authentication state hook
+- `src/middleware.ts` - Authentication middleware
 - `src/lib/queries/apps.ts` - React Query hooks
 - `src/hooks/use-debounce.ts` - Debounce hook for search
 - `app/api/apps/` - All API endpoints
