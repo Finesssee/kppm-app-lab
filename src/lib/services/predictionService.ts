@@ -11,7 +11,8 @@ import { ReplicatePrediction } from '@/types/prediction'
 export async function runPrediction(
   deploymentId: string,
   input: Record<string, unknown>,
-  userId: string
+  userId: string,
+  opts?: { stream?: boolean }
 ): Promise<ReplicatePrediction> {
   const supabase = await getSupabaseUserClient()
 
@@ -35,7 +36,8 @@ export async function runPrediction(
     owner: deployment.replicate_owner,
     name: deployment.deployment_name,
     input,
-    preferWaitSeconds: 10, // Wait for up to 10s for a result
+    preferWaitSeconds: opts?.stream ? undefined : 10, // Don't wait if streaming
+    stream: opts?.stream,
   })
 
   // 3. Create a run record in our database

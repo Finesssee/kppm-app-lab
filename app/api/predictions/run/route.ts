@@ -8,6 +8,7 @@ import { errorResponse } from '@/lib/api-error'
 const RunPredictionSchema = z.object({
   deploymentId: z.string().uuid('Invalid deployment ID.'),
   input: z.record(z.any()),
+  stream: z.boolean().optional(),
 })
 
 export const POST = rateLimitMiddleware(async (req: NextRequest) => {
@@ -24,8 +25,10 @@ export const POST = rateLimitMiddleware(async (req: NextRequest) => {
       return errorResponse(parsed.error)
     }
 
-    const { deploymentId, input } = parsed.data
-    const prediction = await runPrediction(deploymentId, input, session.user.id)
+    const { deploymentId, input, stream } = parsed.data
+    const prediction = await runPrediction(deploymentId, input, session.user.id, {
+      stream,
+    })
 
     return NextResponse.json(prediction)
   } catch (error) {

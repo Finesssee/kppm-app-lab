@@ -1,4 +1,8 @@
 import 'server-only'
+import type {
+  ReplicatePrediction,
+  PredictionStreamEvent,
+} from '@/types/prediction'
 
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN
 const REPLICATE_API_URL = 'https://api.replicate.com'
@@ -206,7 +210,9 @@ export async function deleteDeployment(ref: DeploymentRef) {
 }
 
 // Create a prediction on a deployment
-export async function createPrediction(req: PredictionCreateReq) {
+export async function createPrediction(
+  req: PredictionCreateReq
+): Promise<ReplicatePrediction> {
   const { owner, name, input, preferWaitSeconds, stream } = req
   
   const headers: HeadersInit = {}
@@ -316,49 +322,69 @@ export async function cancelPrediction(id: string) {
 }
 
 // Stream prediction output (for LLMs)
-export async function* streamPrediction(streamUrl: string) {
+export async function* streamPrediction(
+  streamUrl: string
+): AsyncGenerator<PredictionStreamEvent> {
   const response = await fetch(streamUrl, {
     headers: {
       'Authorization': `Bearer ${REPLICATE_API_TOKEN}`,
       'Accept': 'text/event-stream',
+      'Connection': 'keep-alive',
     },
   })
-  
+
   if (!response.ok) {
+    const errorText = await response.text()
     throw normalizeError(
-      new Error(`Stream failed: ${response.statusText}`),
+      new Error(`Stream failed with status ${response.status}: ${errorText}`),
       response.status
     )
   }
-  
-  const reader = response.body?.getReader()
-  if (!reader) {
-    throw new Error('No response body')
+
+  if (!response.body) {
+    throw new Error('Response body is null')
   }
-  
+
+  const reader = response.body.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
-  
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() || ''
-    
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        const data = line.slice(6)
-        if (data === '[DONE]') return
-        
-        try {
-          const event = JSON.parse(data)
-          yield event
-        } catch (e) {
-          console.error('Failed to parse SSE event:', e)
+  let eventType: string | null = null
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) {
+        break
+      }
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || '' // Keep the last partial line in the buffer
+
+      for (const line of lines) {
+        if (line.startsWith('event: ')) {
+          eventType = line.substring(7).trim()
+        } else if (line.startsWith('data: ')) {
+          const data = line.substring(6).trim()
+          if (eventType) {
+            switch (eventType) {
+              case 'output':
+              case 'log':
+                yield { type: eventType, data }
+                break
+              case 'error':
+                yield { type: 'error', data: JSON.parse(data) }
+                break
+              case 'done':
+                yield { type: 'done', data: JSON.parse(data) }
+                return // End of stream
+            }
+            eventType = null // Reset for the next event
+          }
         }
       }
     }
+  } finally {
+    reader.releaseLock()
   }
 }

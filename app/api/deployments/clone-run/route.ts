@@ -10,6 +10,7 @@ import { getSupabaseUserClient } from '@/lib/db'
 const CloneRunSchema = z.object({
   slug: z.string().min(1, 'Slug is required.'),
   input: z.record(z.any()),
+  stream: z.boolean().optional(),
 })
 
 export const POST = rateLimitMiddleware(async (req: NextRequest) => {
@@ -26,7 +27,7 @@ export const POST = rateLimitMiddleware(async (req: NextRequest) => {
       return errorResponse(parsed.error)
     }
 
-    const { slug, input } = parsed.data
+    const { slug, input, stream } = parsed.data
     const userId = session.user.id
 
     // 1. Get app_id from slug
@@ -50,7 +51,7 @@ export const POST = rateLimitMiddleware(async (req: NextRequest) => {
     const deployment = await ensureDeployment({ appId: app.id, userId })
 
     // 3. Run a prediction on the deployment
-    const prediction = await runPrediction(deployment.id, input, userId)
+    const prediction = await runPrediction(deployment.id, input, userId, { stream })
 
     return NextResponse.json(prediction)
   } catch (error) {

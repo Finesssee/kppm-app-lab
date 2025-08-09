@@ -33,6 +33,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `app/api/apps/` - All API endpoints
 - `scripts/seed.ts` - Enhanced with 10 reference apps
 
+## Phase 3: Real-time Prediction Streaming (Completed)
+- **Architecture**: Upgraded from polling to Server-Sent Events (SSE) for real-time prediction status and output streaming. This provides a better user experience with instant feedback and is fully compatible with Vercel's serverless environment.
+- **End-to-End Flow**:
+    1. User toggles \"Stream\" on in the `DeployButton` and runs a prediction.
+    2. The frontend calls `/api/deployments/clone-run` with `stream: true`.
+    3. The backend service creates a prediction on Replicate with `stream: true`, which returns a `stream` URL.
+    4. The frontend receives the initial prediction object, including its ID.
+    5. The `StreamingOutput` component uses the `usePredictionStream` hook, which connects to our new backend endpoint: `GET /api/predictions/[id]/stream`.
+    6. This endpoint authenticates the user, fetches the prediction's stream URL from Replicate, and pipes the SSE stream from Replicate directly to the client.
+- **Key API Changes**:
+    - `POST /api/deployments/clone-run`: Now accepts an optional `stream: boolean` parameter.
+    - `POST /api/predictions/run`: Now accepts an optional `stream: boolean` parameter.
+    - `GET /api/predictions/[id]/stream`: New SSE endpoint that streams prediction events.
+- **Key Files Added**:
+    - `app/api/predictions/[id]/stream/route.ts`: The SSE route handler.
+    - `src/hooks/use-prediction-stream.ts`: Client-side hook using `EventSource` to consume the SSE stream.
+    - `src/components/deploy/StreamingOutput.tsx`: UI component to render real-time prediction output and status.
+- **UI Enhancements**:
+    - `DeployButton` now includes a `Switch` to enable/disable streaming.
+    - The \"Latest Result\" area now shows the `StreamingOutput` component for live updates.
+
 ## Development Commands
 
 ```bash
@@ -197,7 +218,10 @@ type InputType =
 ### Phase 2: Deployment System (Completed)
 - **Implemented**: User authentication, one-click Replicate deployments, user-scoped deployment tracking, and prediction runs with history.
 
-### Phase 3: Creator Features (Planned)
+### Phase 3: Real-time Prediction Streaming (Completed)
+- **Implemented**: Real-time prediction status and output streaming via Server-Sent Events (SSE), replacing client-side polling.
+
+### Phase 4: Creator Features (Planned)
 - App submission system
 - Creator profiles and attribution
 - Collections and staff picks

@@ -22,6 +22,9 @@ import { AppManifest } from '@/types/app'
 import { toast } from 'sonner'
 import { ReplicatePrediction } from '@/types/prediction'
 import { predictionQueryKeys } from '@/lib/queries/predictions'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { StreamingOutput } from './StreamingOutput'
 
 interface DeployButtonProps {
   app: AppManifest
@@ -30,7 +33,9 @@ interface DeployButtonProps {
 export function DeployButton({ app }: DeployButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [latestPrediction, setLatestPrediction] = useState<ReplicatePrediction | null>(null)
-  
+  const [isStreaming, setIsStreaming] = useState(true)
+  const [isLatestRunStreaming, setIsLatestRunStreaming] = useState(false)
+
   const queryClient = useQueryClient()
   const { data: deployments } = useDeployments()
 
@@ -38,13 +43,14 @@ export function DeployButton({ app }: DeployButtonProps) {
 
   const userDeployment = deployments?.find(d => d.app_id === app.id)
 
-  const handleFormSubmit = async (formData: Record<string, any>) => {
+const handleFormSubmit = async (formData: Record<string, any>) => {
     cloneRunMutation.mutate(
-      { slug: app.slug, input: formData },
+      { slug: app.slug, input: formData, stream: isStreaming },
       {
         onSuccess: (data) => {
           toast.success('Prediction started!')
           setLatestPrediction(data)
+          setIsLatestRunStreaming(isStreaming)
           // Invalidate queries to refetch deployment list and run history
           queryClient.invalidateQueries({ queryKey: deploymentQueryKeys.all })
           if (userDeployment) {
@@ -79,6 +85,14 @@ export function DeployButton({ app }: DeployButtonProps) {
           <div className="grid md:grid-cols-2 gap-8 px-4">
             <div>
               <h3 className="text-lg font-semibold mb-4">Inputs</h3>
+              <div className="flex items-center space-x-2 mb-4">
+                <Switch
+                  id="streaming-mode"
+                  checked={isStreaming}
+                  onCheckedChange={setIsStreaming}
+                />
+                <Label htmlFor="streaming-mode">Stream output in real-time</Label>
+              </div>
               <DynamicForm
                 schema={app.form_schema}
                 onSubmit={handleFormSubmit}
@@ -86,20 +100,23 @@ export function DeployButton({ app }: DeployButtonProps) {
               />
             </div>
             <div className="space-y-6">
-                {latestPrediction && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Latest Result</h3>
-                    <pre className="p-4 bg-muted rounded-lg text-sm overflow-x-auto">
-                      {JSON.stringify(latestPrediction, null, 2)}
-                    </pre>
-                  </div>
-                )}
-                {userDeployment && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">History</h3>
-                    <RunHistory deploymentId={userDeployment.id} />
-                  </div>
-                )}
+              {isLatestRunStreaming && latestPrediction ? (
+                <StreamingOutput predictionId={latestPrediction.id} />
+              ) : latestPrediction ? (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Latest Result</h3>
+                  <pre className="p-4 bg-muted rounded-lg text-sm overflow-x-auto">
+                    {JSON.stringify(latestPrediction, null, 2)}
+                  </pre>
+                </div>
+              ) : null}
+
+              {userDeployment && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">History</h3>
+                  <RunHistory deploymentId={userDeployment.id} />
+                </div>
+              )}
             </div>
           </div>
           

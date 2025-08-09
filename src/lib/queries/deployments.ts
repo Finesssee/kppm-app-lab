@@ -27,6 +27,7 @@ async function fetchDeployment(id: string): Promise<DeploymentCombined> {
 async function cloneAndRun(params: {
   slug: string
   input: Record<string, any>
+  stream?: boolean
 }): Promise<ReplicatePrediction> {
   const response = await fetch('/api/deployments/clone-run', {
     method: 'POST',
@@ -67,7 +68,7 @@ export function useCloneRunMutation() {
   return useMutation<
     ReplicatePrediction,
     Error,
-    { slug: string; input: Record<string, any> }
+    { slug: string; input: Record<string, any>; stream?: boolean }
   >({
     mutationFn: cloneAndRun,
     onSuccess: () => {
