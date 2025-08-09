@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAppStats } from '@/lib/db'
 import { supabaseServer } from '@/lib/db'
-import { errorResponse, generateCorrelationId } from '@/lib/api-error'
 import { rateLimitMiddleware } from '@/lib/rate-limit'
+import { generateCorrelationId, errorResponse } from '@/lib/api-error'
 
-async function getAppHandler(
+async function getAppStatsHandler(
   _request: NextRequest,
   { params }: { params: { slug: string } }
 ) {
@@ -20,10 +21,10 @@ async function getAppHandler(
       )
     }
     
-    // Get app with all fields
+    // First get the app ID from slug
     const { data: app, error: appError } = await supabaseServer
       .from('apps')
-      .select('*')
+      .select('id')
       .eq('slug', slug)
       .single()
     
@@ -41,26 +42,28 @@ async function getAppHandler(
       )
     }
     
-    // Get latest app version with schema
-    const { data: version } = await supabaseServer
-      .from('app_versions')
-      .select('*')
-      .eq('app_id', app.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
+    // Get stats for the app
+    const stats = await getAppStats(app.id)
     
-    // Extract replicate config and inputs from schema if available
-    const result = {
-      ...app,
-      replicate: version?.schema?.replicate || null,
-      inputs: version?.schema?.inputs || [],
-      version: version || null,
+    if (!stats) {
+      return NextResponse.json(
+        {
+          forkCount: 0,
+          runCount: 0,
+          ratingAvg: 0,
+        },
+        {
+          headers: {
+            'X-Correlation-Id': correlationId,
+          },
+        }
+      )
     }
     
-    return NextResponse.json(result, {
+    return NextResponse.json(stats, {
       headers: {
         'X-Correlation-Id': correlationId,
+        'Cache-Control': 'public, max-age=60', // Cache for 1 minute
       },
     })
     
@@ -69,4 +72,4 @@ async function getAppHandler(
   }
 }
 
-export const GET = rateLimitMiddleware(getAppHandler)
+export const GET = rateLimitMiddleware(getAppStatsHandler)

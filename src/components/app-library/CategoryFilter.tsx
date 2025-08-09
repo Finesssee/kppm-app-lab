@@ -1,11 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AppCategory } from "@/types/app";
+
+interface Category {
+  id: string;
+  name: string;
+  count: number;
+  icon: string;
+}
 
 interface CategoryFilterProps {
-  categories: AppCategory[];
+  categories: Category[];
   selectedCategory: string | null;
-  onCategorySelect: (categoryId: string | null) => void;
+  onCategorySelect: (category: string | null) => void;
 }
 
 export const CategoryFilter = ({ 
@@ -30,9 +36,9 @@ export const CategoryFilter = ({
       {categories.map((category) => (
         <Button
           key={category.id}
-          variant={selectedCategory === category.id ? "default" : "outline"}
+          variant={selectedCategory === category.name ? "default" : "outline"}
           size="sm"
-          onClick={() => onCategorySelect(category.id)}
+          onClick={() => onCategorySelect(category.name)}
           className="h-8"
         >
           <span className="mr-2">{category.icon}</span>

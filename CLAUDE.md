@@ -2,6 +2,33 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Recent Updates - Phase 1 Implementation (January 2025)
+
+### Core Library Features Completed
+- **Database Schema**: Added app statistics (fork_count, run_count, rating_avg), featured flag, and full-text search indexes
+- **API Endpoints**: 
+  - `/api/apps` - List and filter apps with pagination and sorting
+  - `/api/apps/[slug]` - Get app details with version schema
+  - `/api/apps/[slug]/stats` - Get app statistics
+  - `/api/apps/categories` - Get dynamic categories with counts
+  - `/api/apps/search` - Advanced search with filters
+- **React Query Integration**: Added hooks for data fetching with caching
+- **UI Enhancements**:
+  - Real-time search with debouncing
+  - Sort options (recent, popular, trending, alphabetical)
+  - Stats display (runs, forks, ratings)
+  - Featured app badges
+  - Loading states and error handling
+- **Seed Data**: 10 reference apps across categories (Image, Text, Audio, Data Analysis)
+
+### Key Files Added/Modified
+- `supabase/migrations/002_core_library.sql` - Stats and search indexes
+- `src/lib/db.ts` - Server-side Supabase client
+- `src/lib/queries/apps.ts` - React Query hooks
+- `src/hooks/use-debounce.ts` - Debounce hook for search
+- `app/api/apps/` - All API endpoints
+- `scripts/seed.ts` - Enhanced with 10 reference apps
+
 ## Development Commands
 
 ```bash
@@ -160,6 +187,22 @@ type InputType =
 3. Seed data: `npm run db:seed`
 4. Start Next.js: `npm run dev`
 5. Access at http://localhost:3000
+
+## Next Implementation Phases
+
+### Phase 2: Deployment System (Planned)
+- User authentication with Supabase Auth
+- One-click deployment flow to Replicate
+- User-scoped deployments tracking
+- Prediction runs with streaming results
+- Error handling and retry logic
+
+### Phase 3: Creator Features (Planned)
+- App submission system
+- Creator profiles and attribution
+- Collections and staff picks
+- Basic analytics dashboard
+- Plugin architecture for connectors (Vercel, Cursor, etc.)
 
 ### Common Tasks
 

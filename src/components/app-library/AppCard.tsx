@@ -1,12 +1,11 @@
-import { Clock, Star, User, ArrowRight } from "lucide-react";
+import { Clock, Star, User, ArrowRight, TrendingUp, GitFork } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { AppManifest } from "@/types/app";
 
 interface AppCardProps {
-  app: AppManifest;
-  onSelect: (app: AppManifest) => void;
+  app: any; // Using any for now since the API returns a different structure
+  onSelect: (app: any) => void;
 }
 
 export const AppCard = ({ app, onSelect }: AppCardProps) => {
@@ -15,9 +14,9 @@ export const AppCard = ({ app, onSelect }: AppCardProps) => {
       <div onClick={() => onSelect(app)}>
         {/* Banner Image */}
         <div className="relative h-32 bg-gradient-subtle rounded-t-lg overflow-hidden">
-          {app.banner ? (
+          {app.cover_image ? (
             <img 
-              src={app.banner} 
+              src={app.cover_image} 
               alt={app.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
@@ -32,15 +31,14 @@ export const AppCard = ({ app, onSelect }: AppCardProps) => {
             </Badge>
           </div>
 
-          {/* Pricing Badge */}
-          <div className="absolute top-3 right-3">
-            <Badge 
-              variant={app.pricing === 'free' ? 'outline' : 'default'}
-              className="text-xs bg-background/80 backdrop-blur-sm"
-            >
-              {app.pricing === 'free' ? 'Free' : 'Paid'}
-            </Badge>
-          </div>
+          {/* Featured Badge */}
+          {app.featured && (
+            <div className="absolute top-3 right-3">
+              <Badge className="text-xs bg-yellow-500/90 text-white backdrop-blur-sm">
+                ⭐ Featured
+              </Badge>
+            </div>
+          )}
         </div>
 
         <CardHeader className="pb-3">
@@ -81,16 +79,28 @@ export const AppCard = ({ app, onSelect }: AppCardProps) => {
             )}
           </div>
 
-          {/* Metadata */}
+          {/* Stats */}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center">
-              <Clock className="h-3 w-3 mr-1" />
-              {new Date(app.updated_at).toLocaleDateString()}
+            <div className="flex items-center gap-3">
+              {app.run_count > 0 && (
+                <div className="flex items-center" title={`${app.run_count} runs`}>
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  {app.run_count > 999 ? `${(app.run_count / 1000).toFixed(1)}k` : app.run_count}
+                </div>
+              )}
+              {app.fork_count > 0 && (
+                <div className="flex items-center" title={`${app.fork_count} forks`}>
+                  <GitFork className="h-3 w-3 mr-1" />
+                  {app.fork_count > 999 ? `${(app.fork_count / 1000).toFixed(1)}k` : app.fork_count}
+                </div>
+              )}
             </div>
-            <div className="flex items-center">
-              <Star className="h-3 w-3 mr-1" />
-              v{app.version}
-            </div>
+            {app.rating_avg > 0 && (
+              <div className="flex items-center" title={`Rating: ${app.rating_avg}`}>
+                <Star className="h-3 w-3 mr-1 fill-yellow-500 text-yellow-500" />
+                {Number(app.rating_avg).toFixed(1)}
+              </div>
+            )}
           </div>
         </CardContent>
       </div>

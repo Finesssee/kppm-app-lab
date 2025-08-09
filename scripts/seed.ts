@@ -299,6 +299,193 @@ const seedApps: Omit<AppManifest, 'id' | 'created_at' | 'updated_at'>[] = [
       },
     ],
   },
+  {
+    name: 'Background Remover',
+    slug: 'background-remover',
+    description: 'Remove backgrounds from images instantly with AI-powered segmentation',
+    category: 'Image Generation',
+    tags: ['background-removal', 'image-editing', 'segmentation'],
+    cover_image: 'https://replicate.delivery/pbxt/placeholder-bg-remove.jpg',
+    replicate: {
+      model: 'cjwbw/rembg',
+      defaultHardware: 'cpu',
+      minInstances: 0,
+      maxInstances: 1,
+    },
+    inputs: [
+      {
+        id: 'image',
+        name: 'image',
+        label: 'Input Image',
+        type: 'file',
+        required: true,
+        validation: {
+          maxSize: 10485760, // 10MB
+          accept: ['image/jpeg', 'image/png', 'image/webp'],
+        },
+        description: 'Upload an image to remove its background',
+      },
+      {
+        id: 'output_format',
+        name: 'output_format',
+        label: 'Output Format',
+        type: 'select',
+        default_value: 'png',
+        validation: {
+          options: ['png', 'webp'],
+        },
+        description: 'Choose the output image format',
+      },
+    ],
+  },
+  {
+    name: 'Music Generator',
+    slug: 'music-generator',
+    description: 'Create original music tracks from text descriptions using MusicGen',
+    category: 'Audio',
+    tags: ['music-generation', 'audio', 'composition', 'musicgen'],
+    cover_image: 'https://replicate.delivery/pbxt/placeholder-music.jpg',
+    replicate: {
+      model: 'meta/musicgen',
+      defaultHardware: 'gpu-t4',
+      minInstances: 0,
+      maxInstances: 1,
+    },
+    inputs: [
+      {
+        id: 'prompt',
+        name: 'prompt',
+        label: 'Music Description',
+        type: 'textarea',
+        required: true,
+        placeholder: 'Upbeat electronic dance music with heavy bass...',
+        description: 'Describe the style, mood, and instruments',
+      },
+      {
+        id: 'duration',
+        name: 'duration',
+        label: 'Duration (seconds)',
+        type: 'slider',
+        default_value: 30,
+        validation: {
+          min: 10,
+          max: 120,
+          step: 5,
+        },
+        description: 'Length of the generated music',
+      },
+      {
+        id: 'top_k',
+        name: 'top_k',
+        label: 'Creativity',
+        type: 'slider',
+        default_value: 250,
+        validation: {
+          min: 0,
+          max: 500,
+          step: 10,
+        },
+        description: 'Higher values = more creative output',
+      },
+    ],
+  },
+  {
+    name: 'Voice Cloner',
+    slug: 'voice-cloner',
+    description: 'Clone voices and generate speech in any voice from a short audio sample',
+    category: 'Audio',
+    tags: ['voice-cloning', 'speech-synthesis', 'audio', 'tts'],
+    cover_image: 'https://replicate.delivery/pbxt/placeholder-voice.jpg',
+    replicate: {
+      model: 'lucataco/xtts-v2',
+      defaultHardware: 'gpu-t4',
+      minInstances: 0,
+      maxInstances: 1,
+    },
+    inputs: [
+      {
+        id: 'text',
+        name: 'text',
+        label: 'Text to Speak',
+        type: 'textarea',
+        required: true,
+        placeholder: 'Enter the text you want to be spoken...',
+        validation: {
+          max: 1000,
+        },
+      },
+      {
+        id: 'speaker',
+        name: 'speaker',
+        label: 'Voice Sample',
+        type: 'file',
+        required: true,
+        validation: {
+          maxSize: 5242880, // 5MB
+          accept: ['audio/wav', 'audio/mp3', 'audio/mpeg'],
+        },
+        description: 'Upload a 5-10 second voice sample',
+      },
+      {
+        id: 'language',
+        name: 'language',
+        label: 'Language',
+        type: 'select',
+        default_value: 'en',
+        validation: {
+          options: ['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh-cn', 'ja', 'ko'],
+        },
+      },
+    ],
+  },
+  {
+    name: 'CSV Data Analyzer',
+    slug: 'csv-analyzer',
+    description: 'Automatically analyze and visualize CSV data with AI-powered insights',
+    category: 'Data Analysis',
+    tags: ['data-analysis', 'csv', 'visualization', 'charts'],
+    cover_image: 'https://replicate.delivery/pbxt/placeholder-data.jpg',
+    replicate: {
+      model: 'andreasjansson/pandas-ai',
+      defaultHardware: 'cpu',
+      minInstances: 0,
+      maxInstances: 1,
+    },
+    inputs: [
+      {
+        id: 'csv_file',
+        name: 'csv_file',
+        label: 'CSV File',
+        type: 'file',
+        required: true,
+        validation: {
+          maxSize: 10485760, // 10MB
+          accept: ['text/csv', 'application/csv'],
+        },
+        description: 'Upload your CSV data file',
+      },
+      {
+        id: 'query',
+        name: 'query',
+        label: 'Analysis Query',
+        type: 'textarea',
+        required: true,
+        placeholder: 'Show me the correlation between columns X and Y...',
+        description: 'What would you like to analyze?',
+      },
+      {
+        id: 'chart_type',
+        name: 'chart_type',
+        label: 'Visualization Type',
+        type: 'select',
+        default_value: 'auto',
+        validation: {
+          options: ['auto', 'line', 'bar', 'scatter', 'pie', 'heatmap'],
+        },
+        description: 'Choose chart type or let AI decide',
+      },
+    ],
+  },
 ]
 
 async function seed() {
@@ -317,10 +504,20 @@ async function seed() {
     for (const appData of seedApps) {
       const { replicate, inputs, ...app } = appData
       
+      // Add author and initial stats
+      const appWithStats = {
+        ...app,
+        author: 'Replicate Hub Team',
+        fork_count: Math.floor(Math.random() * 50) + 10,
+        run_count: Math.floor(Math.random() * 200) + 50,
+        rating_avg: (Math.random() * 1.5 + 3.5).toFixed(2),
+        featured: Math.random() > 0.7,
+      }
+      
       // Insert app
       const { data: insertedApp, error: appError } = await supabase
         .from('apps')
-        .insert(app)
+        .insert(appWithStats)
         .select()
         .single()
       
