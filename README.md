@@ -1,194 +1,257 @@
-# KPPM - AI App Library
+# Replicate Hub - AI App Library
 
-A Canva-style, local-only AI app library built with React, TypeScript, and Vite. Browse, execute, and clone AI applications with dynamic form rendering and Replicate integration.
+A Canva-style, local-only AI app library built with Next.js 14+, TypeScript, and Supabase. Browse, execute, and clone AI applications with dynamic form rendering and Replicate integration.
+
+## 🎯 Problem → Gap → Goal
+
+**Problem** — The AI ecosystem is fragmented:
+- Design tools like Canva start you from ready-made templates instead of a blank page
+- Coding assistants take you from prompt to code/app — but you still start from scratch every time
+- Model hosts like Replicate make it easy to run/deploy models via API — but they don't ship full, ready-to-use apps
+
+**Gap** — There's no unified library where developers and makers can browse, share, remix, and instantly deploy AI apps with connectors across design tools, coding assistants, and model hosts.
+
+**Goal** — Build an open-source Replicate Hub — the "Canva for AI apps" where anyone can:
+- Browse a rich library of AI applications (not just models)
+- Clone or customize apps instantly without starting from zero
+- Integrate seamlessly with model hosting (Replicate), coding assistants, and app generators
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js 18+ and npm
 - Git
+- Supabase CLI (`npm install -g supabase`)
+
+### Environment Setup
+
+1. **Clone the repository**
+```bash
+git clone <YOUR_GIT_URL>
+cd replicate-hub
+```
+
+2. **Copy environment variables**
+```bash
+cp .env.local.example .env.local
+```
+
+3. **Configure environment variables** in `.env.local`:
+```bash
+# Get from https://replicate.com/account/api-tokens
+REPLICATE_API_TOKEN=r8_your_token_here
+
+# For local Supabase (will be provided by npx supabase status)
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+```
 
 ### Local Development Setup
 
 ```bash
-# Clone the repository
-git clone <YOUR_GIT_URL>
-cd kppm
-
 # Install dependencies
 npm install
+
+# Start Supabase locally
+npx supabase start
+
+# Get your local Supabase credentials
+npx supabase status
+
+# Update .env.local with the credentials from above
+
+# Run database migrations
+npm run db:migrate
+
+# Seed the database with example apps
+npm run db:seed
 
 # Start development server
 npm run dev
 ```
 
-The app will be available at `http://localhost:8080`
+The app will be available at `http://localhost:3000`
 
 ## 📋 Available Scripts
 
 ```bash
 # Development
-npm run dev          # Start development server with hot reload
-npm run build        # Build for production
-npm run preview      # Preview production build locally
-npm run lint         # Run ESLint
+npm run dev             # Start Next.js development server
+npm run build           # Build for production
+npm run start           # Start production server
 
-# Type checking
-npx tsc --noEmit     # Check TypeScript types
+# Code Quality
+npm run lint            # Run ESLint
+npm run format          # Format code with Prettier
+
+# Database
+npm run db:migrate      # Run database migrations
+npm run db:seed         # Seed database with example data
+npm run db:reset        # Reset database and re-run migrations
+
+# Testing
+npm run test            # Run unit tests
+npm run test:coverage   # Run tests with coverage report
+npm run test:e2e        # Run Playwright E2E tests
 ```
 
 ## 🏗️ Architecture
 
-### Core Components
-- **App Library** - Browse and search AI applications
-- **Dynamic Forms** - Schema-driven form rendering
-- **App Detail** - Complete app pages with live forms
-- **Mock Integration** - Simulated API responses for development
-
 ### Technology Stack
-- **Frontend**: React 18, TypeScript, Vite
+- **Framework**: Next.js 14+ with App Router
+- **Language**: TypeScript (strict mode)
 - **Styling**: Tailwind CSS, shadcn/ui
-- **Forms**: React Hook Form with validation
-- **State**: React Query for data management
-- **Routing**: React Router DOM
+- **Database**: Supabase (PostgreSQL)
+- **Forms**: React Hook Form with Zod validation
+- **AI Integration**: Replicate API
+- **Auth**: Supabase Auth (anonymous/magic links)
+
+### Project Structure
+```
+app/                    # Next.js App Router pages
+├── api/               # API routes
+│   ├── apps/         # App search and details
+│   ├── deployments/  # Deployment management
+│   ├── predictions/  # Replicate predictions
+│   └── runs/         # Execution history
+src/
+├── components/        # React components
+│   ├── app-detail/   # App detail page components
+│   ├── app-library/  # Library browsing components
+│   ├── forms/        # Dynamic form system
+│   └── ui/          # shadcn/ui components
+├── lib/              # Utilities and helpers
+│   ├── replicate.ts  # Replicate API connector
+│   ├── schemas.ts    # Zod validation schemas
+│   ├── api-error.ts  # Error handling
+│   └── rate-limit.ts # Rate limiting
+└── types/            # TypeScript definitions
+```
+
+### Database Schema
+
+**apps** - AI application definitions
+- `id` (UUID): Primary key
+- `name`: Application name
+- `slug`: URL-friendly identifier
+- `category`: Application category
+- `tags`: Array of tags
+- `description`: Application description
+
+**app_versions** - Versioned app configurations
+- `app_id`: Reference to apps table
+- `replicate_model`: Replicate model identifier
+- `schema`: JSON manifest with inputs and configuration
+
+**deployments** - User-specific deployments
+- `app_id`: Reference to apps table
+- `user_id`: Owner of the deployment
+- `hardware`: Selected hardware tier
+- `min_instances`: Minimum running instances
+- `max_instances`: Maximum instances for scaling
+
+**runs** - Execution history
+- `deployment_id`: Reference to deployments
+- `input_payload`: Input parameters
+- `status`: Execution status
+- `duration_ms`: Execution time
 
 ## 🔧 Configuration
 
-### Environment Setup
-For Replicate integration, create a `.env.local` file:
+### Replicate Integration
+The app supports multiple Replicate features:
+- **Generic predictions**: Direct model execution
+- **Deployments**: Persistent, optimized endpoints
+- **Streaming**: Real-time output for LLMs
+- **File handling**: Image/audio upload and generation
+
+### Rate Limiting
+In-memory token bucket rate limiting:
+- **Per IP**: 30 requests/minute
+- **Per User**: 100 requests/minute (authenticated)
+
+### Security
+- Server-only API keys (never exposed to client)
+- Row Level Security (RLS) on all tables
+- User-scoped data access
+- Input validation with Zod schemas
+
+## 🧪 Testing
 
 ```bash
-# Replicate API (for actual integration)
-VITE_REPLICATE_API_TOKEN=your_token_here
+# Run all tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Run E2E tests (requires running app)
+npm run test:e2e
 ```
 
-**Note**: Keep all API keys local and never commit them to version control.
+Test coverage targets:
+- Unit tests: ≥70% statement coverage
+- Integration tests: Database operations
+- E2E tests: Critical user flows
 
-### Mock Data
-The app includes comprehensive mock data for development:
-- 6 sample AI applications
-- 5 app categories  
-- Complete form schemas
-- Simulated API responses
+## 🔍 Troubleshooting
+
+### Missing Environment Variables
+**Error**: "Missing required environment variables"
+**Solution**: Ensure all variables in `.env.local.example` are set in `.env.local`
+
+### Database Connection Issues
+**Error**: "Database connection failed"
+**Solution**: 
+1. Check Supabase is running: `npx supabase status`
+2. Verify credentials in `.env.local`
+3. Restart Supabase: `npx supabase stop && npx supabase start`
+
+### Replicate API Errors
+**Error**: "REPLICATE_API_TOKEN is not configured"
+**Solution**: 
+1. Get token from https://replicate.com/account/api-tokens
+2. Add to `.env.local`
+3. Restart Next.js server
+
+### Rate Limit Exceeded
+**Error**: "Too many requests. Please slow down."
+**Solution**: Wait for the time specified in `Retry-After` header
 
 ## 🎯 Features
 
-### App Library
-- **Category Filtering** - Filter apps by category with counts
-- **Search** - Full-text search across apps, descriptions, and tags
-- **Responsive Grid** - Beautiful card-based layout
-- **App Metadata** - Author, version, pricing, and rating info
+### Core Functionality
+- ✅ Browse AI app library with search and filters
+- ✅ Dynamic form rendering from JSON schemas
+- ✅ Replicate API integration
+- ✅ User-scoped deployments
+- ✅ Execution history tracking
+- ✅ Real-time streaming for LLMs
+- ✅ File upload/download support
 
-### Dynamic Forms
-- **Schema-Driven** - Forms generated from JSON schemas
-- **Field Types** - Text, textarea, select, slider, checkbox, file upload
-- **Validation** - Built-in form validation with error handling
-- **Loading States** - Smooth loading indicators during processing
-
-### App Detail Pages
-- **Tabbed Interface** - Form, About, and Examples sections
-- **Live Results** - Display generated outputs inline
-- **App Information** - Complete metadata and model details
-- **Social Actions** - Share, clone, and download functionality
-
-## 📁 Project Structure
-
-```
-src/
-├── components/
-│   ├── app-detail/          # App detail page components
-│   ├── app-library/         # Library and card components  
-│   ├── forms/               # Dynamic form system
-│   ├── layout/              # Header and layout components
-│   └── ui/                  # shadcn/ui components
-├── data/                    # Mock data and schemas
-├── types/                   # TypeScript type definitions
-├── pages/                   # Route components
-└── lib/                     # Utilities and helpers
-```
-
-## 🧪 Development
-
-### Adding New Apps
-1. Add app manifest to `src/data/mockApps.ts`
-2. Define form schema with validation rules
-3. Test form rendering and validation
-4. Add category if needed in `mockCategories`
-
-### Form Schema Format
-```typescript
-{
-  title: "App Name",
-  description: "App description",
-  fields: [
-    {
-      id: "field_id",
-      name: "field_name", 
-      label: "Field Label",
-      type: "text|textarea|select|slider|checkbox|file",
-      required: true,
-      validation: {
-        min: 0,
-        max: 100,
-        options: ["option1", "option2"]
-      }
-    }
-  ]
-}
-```
-
-### Design System
-All styling uses the design system defined in:
-- `src/index.css` - CSS custom properties and themes
-- `tailwind.config.ts` - Tailwind configuration
-- Component variants use semantic tokens only
+### Seeded Example Apps
+1. **Image Generator** - Stable Diffusion XL text-to-image
+2. **Image to Image** - Style transfer and editing
+3. **Chat Assistant** - Llama 2 conversational AI
+4. **Text Summarizer** - Automatic summarization
+5. **OCR Scanner** - Text extraction from images
+6. **Text to Speech** - Natural voice synthesis
 
 ## 🔒 Security Notes
 
 - **Local Only** - This project runs entirely locally
 - **API Keys** - Store all secrets in `.env.local` (gitignored)
 - **No Cloud** - No deployment configs or cloud dependencies
-- **Server-Side** - Keep sensitive operations server-side when integrating
-
-## 🎨 Design Philosophy
-
-Inspired by Canva's design principles:
-- **Clean & Modern** - Minimalist interface with purposeful elements
-- **Intuitive Navigation** - Easy discovery and interaction patterns  
-- **Visual Hierarchy** - Clear content organization and typography
-- **Smooth Interactions** - Polished animations and hover effects
-- **Responsive Design** - Works beautifully on all screen sizes
-
-## 📖 Usage Examples
-
-### Running a Text-to-Image App
-1. Browse the App Library
-2. Click on "Stable Diffusion XL"
-3. Fill out the prompt and settings
-4. Click "Run App" to generate image
-5. Download or share the result
-
-### Adding Custom Apps
-1. Define your app manifest in `mockApps.ts`
-2. Create a form schema with required fields
-3. The dynamic form system handles the rest
-4. Integrate with your preferred AI service
-
-## 🔄 Local Development Workflow
-
-1. **Start Development** - `npm run dev`
-2. **Make Changes** - Edit components, add features
-3. **Test Locally** - Use mock data for rapid iteration
-4. **Build & Preview** - `npm run build && npm run preview`
-5. **Type Check** - `npx tsc --noEmit`
+- **Server-Side** - Sensitive operations stay server-side
 
 ## 📚 Additional Resources
 
-- [Vite Documentation](https://vitejs.dev/)
-- [React Documentation](https://react.dev/)
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Replicate API Documentation](https://replicate.com/docs)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [shadcn/ui](https://ui.shadcn.com/)
-- [Replicate API](https://replicate.com/docs) (for actual integration)
 
 ---
 
