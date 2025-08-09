@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@auth/*": ["./src/lib/auth/*"],
+      "@services/*": ["./src/lib/services/*"]
     },
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": true,
