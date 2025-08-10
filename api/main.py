@@ -17,6 +17,7 @@ from uuid import uuid4
 from pathlib import Path
 import zipfile
 import io
+import tarfile
 from dotenv import load_dotenv
 
 # Initialize FastAPI app
@@ -348,14 +349,14 @@ async def create_workspace(payload: CreateWorkspaceRequest):
         data = resp.content
 
     # Extract safely
+    extracted = False
+    # Try ZIP first
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as zf:
             for member in zf.infolist():
-                # Prevent path traversal
                 member_path = Path(member.filename)
                 if member_path.is_absolute() or ".." in member_path.parts:
                     continue
-                # Drop the first path segment if archive wraps files in a root folder
                 parts = list(member_path.parts)
                 rel_parts = parts[1:] if len(parts) > 1 else parts
                 out_path = workspace_dir.joinpath(*rel_parts)
@@ -365,8 +366,36 @@ async def create_workspace(payload: CreateWorkspaceRequest):
                     out_path.parent.mkdir(parents=True, exist_ok=True)
                     with zf.open(member) as src, open(out_path, "wb") as dst:
                         dst.write(src.read())
+        extracted = True
     except zipfile.BadZipFile:
-        raise HTTPException(status_code=400, detail="Source is not a valid zip archive")
+        extracted = False
+
+    # Fallback to TAR (e.g., tar.gz from providers)
+    if not extracted:
+        try:
+            with tarfile.open(fileobj=io.BytesIO(data), mode='r:*') as tf:
+                for member in tf.getmembers():
+                    member_path = Path(member.name)
+                    if member_path.is_absolute() or ".." in member_path.parts:
+                        continue
+                    parts = list(member_path.parts)
+                    rel_parts = parts[1:] if len(parts) > 1 else parts
+                    out_path = workspace_dir.joinpath(*rel_parts)
+                    if member.isdir():
+                        out_path.mkdir(parents=True, exist_ok=True)
+                    else:
+                        out_path.parent.mkdir(parents=True, exist_ok=True)
+                        src = tf.extractfile(member)
+                        if src is None:
+                            continue
+                        with open(out_path, 'wb') as dst:
+                            dst.write(src.read())
+            extracted = True
+        except tarfile.TarError:
+            extracted = False
+
+    if not extracted:
+        raise HTTPException(status_code=400, detail="Unsupported archive format (expect zip or tar.gz)")
 
     return {"id": workspace_id, "title": payload.title or workspace_id}
 

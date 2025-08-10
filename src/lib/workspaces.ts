@@ -1,3 +1,14 @@
+export function buildGithubZipUrl(owner: string, repo: string, ref: string = 'main'): string {
+  return `https://github.com/${owner}/${repo}/archive/refs/heads/${ref}.zip`
+}
+
+export function buildHuggingFaceZipUrl(namespace: string, repo: string, ref: string = 'main'): string {
+  // Hugging Face repos can be downloaded via code archive
+  // Example: https://huggingface.co/spaces/org/space/resolve/main?download=1 (varies by resource)
+  // For generic git repos hosted on HF (models/datasets/spaces) we can use raw git archive endpoints.
+  // Fallback to GitHub-style if a mirror URL is provided by user.
+  return `https://huggingface.co/${namespace}/${repo}/resolve/${ref}?download=1`
+}
 export interface Workspace {
   id: string
   title: string
