@@ -33,6 +33,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `app/api/apps/` - All API endpoints
 - `scripts/seed.ts` - Enhanced with 10 reference apps
 
+### Vite Migration (February 2025)
+- **Status**: Completed
+- **Summary**: The project has been migrated from the Next.js App Router to a Vite + React setup.
+- **Reason**: To leverage Vite\'s significantly faster development server (HMR), simpler build configuration, and to resolve tooling complexities.
+- **Key Changes**:
+    - **Build Tool**: Replaced Next.js with Vite. `next.config.js` has been replaced by `vite.config.ts`.
+    - **Project Structure**: Shifted from Next.js\'s `app` directory to a conventional `src` directory with `main.tsx` as the entry point and `index.html` in the root.
+    - **Server Components**: The project no longer uses React Server Components. All components are now client-side rendered by default.
+    - **API Routes**: The `app/api` routes are being refactored. For local development, Vite\'s proxy is used to forward API requests to a backend service (e.g., Supabase functions).
+    - **Scripts**: `package.json` scripts were updated from `next dev/build/start` to `vite`, `vite build`, and `vite preview`.
+
 ## Recent Fixes (January 2025)
 
 ### Client Component Error Fix
