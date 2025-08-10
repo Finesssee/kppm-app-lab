@@ -3,18 +3,8 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build", 
-    "build:dev": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
-    "test": "jest",
-    "test:coverage": "jest --coverage",
-    "test:e2e": "playwright test",
-    "db:migrate": "supabase migration up",
-    "db:seed": "tsx scripts/seed.ts",
-    "db:reset": "supabase db reset"
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
