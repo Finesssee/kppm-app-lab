@@ -33,6 +33,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `app/api/apps/` - All API endpoints
 - `scripts/seed.ts` - Enhanced with 10 reference apps
 
+## Recent Fixes (January 2025)
+
+### Client Component Error Fix
+- **Issue**: "Event handlers cannot be passed to Client Component props" error in Next.js App Router
+- **Cause**: The `Header` component (`src/components/layout/Header.tsx`) had interactive elements (onChange handler) but wasn't marked as a client component
+- **Solution**: Added `"use client"` directive to the top of the Header component
+- **Important Note**: In Next.js App Router, any component with event handlers (onClick, onChange, etc.) or React hooks must be marked as a Client Component with the `"use client"` directive
+
 ## Phase 3: Real-time Prediction Streaming (Completed)
 - **Architecture**: Upgraded from polling to Server-Sent Events (SSE) for real-time prediction status and output streaming. This provides a better user experience with instant feedback and is fully compatible with Vercel's serverless environment.
 - **End-to-End Flow**:
