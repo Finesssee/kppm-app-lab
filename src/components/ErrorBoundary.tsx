@@ -1,16 +1,16 @@
 import React from "react";
-
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { logError } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  onError?: (error: Error, info: React.ErrorInfo) => void;
+}
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error?: Error;
-}
-
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: React.ComponentType<{ error: Error; reset: () => void }>;
 }
 
 class ErrorBoundary extends React.Component<
@@ -26,40 +26,38 @@ class ErrorBoundary extends React.Component<
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    console.error("Error boundary caught an error:", error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    logError(error, { componentStack: errorInfo.componentStack });
+
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
   }
 
-  handleReset = (): void => {
-    this.setState({ hasError: false, error: undefined });
-  };
-
-  render(): React.ReactNode {
-    if (this.state.hasError && this.state.error) {
+  render() {
+    if (this.state.hasError) {
       if (this.props.fallback) {
-        const FallbackComponent = this.props.fallback;
-        return (
-          <FallbackComponent
-            error={this.state.error}
-            reset={this.handleReset}
-          />
-        );
+        return this.props.fallback;
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <div className="max-w-md w-full">
-            <Alert variant="destructive">
-              <AlertTitle>Something went wrong</AlertTitle>
-              <AlertDescription>
-                {this.state.error.message || "An unexpected error occurred"}
-              </AlertDescription>
-            </Alert>
-            <div className="mt-4 text-center">
-              <Button onClick={this.handleReset} variant="outline">
-                Try again
-              </Button>
-            </div>
+        <div
+          className="flex h-screen w-full flex-col items-center justify-center bg-background text-foreground"
+          role="alert"
+        >
+          <div className="text-center">
+            <h1 className="mb-4 text-2xl font-bold">Something went wrong.</h1>
+            <p className="mb-8 text-muted-foreground">
+              We've been notified of the issue. Please try refreshing the page.
+            </p>
+            {this.state.error && (
+              <pre className="mb-4 whitespace-pre-wrap rounded bg-destructive/10 p-4 text-left text-sm text-destructive">
+                {this.state.error.message}
+              </pre>
+            )}
+            <Button onClick={() => window.location.reload()}>
+              Refresh Page
+            </Button>
           </div>
         </div>
       );

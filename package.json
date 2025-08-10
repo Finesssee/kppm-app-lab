@@ -10,6 +10,7 @@
     "start": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "ci:check": "npm run typecheck && npm run lint",
     "test": "jest --passWithNoTests",
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test",

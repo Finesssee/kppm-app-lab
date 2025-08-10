@@ -25,8 +25,4 @@ const TooltipContent = React.forwardRef<
 ));
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
-<<<<<<< HEAD
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
-=======
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
->>>>>>> a624bbc (chore: fix deps, tsconfig, lint errors; start dev)
