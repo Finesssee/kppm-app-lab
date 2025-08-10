@@ -3,6 +3,7 @@ import React, { Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import ErrorBoundary from "./components/ErrorBoundary";
+import Header from "./components/layout/Header";
 import PageLoader from "./components/PageLoader";
 import { Toaster } from "./components/ui/toaster";
 import { TooltipProvider } from "./components/ui/tooltip";
@@ -25,6 +26,7 @@ const App: React.FC = () => (
         <Toaster />
         <BrowserRouter>
           <Suspense fallback={<PageLoader message="Loading KPPM..." />}>
+            <Header />
             <Routes>
               <Route path="/" element={<Index />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

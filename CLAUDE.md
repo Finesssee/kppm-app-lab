@@ -52,6 +52,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Solution**: Added `"use client"` directive to the top of the Header component
 - **Important Note**: In Next.js App Router, any component with event handlers (onClick, onChange, etc.) or React hooks must be marked as a Client Component with the `"use client"` directive
 
+## Refactoring and Cleanup (February 2025)
+
+### Summary
+A major refactoring was performed to eliminate redundancy, remove obsolete code from the Next.js to Vite migration, and unify the component ecosystem.
+
+### 1. Unification of Toast System
+- **Action**: Removed the duplicate "Sonner" toast implementation. The project now exclusively uses the existing Radix-based toast system provided by shadcn/ui.
+- **Reason**: To eliminate redundant code, reduce dependency footprint, and resolve the `next-themes` conflict which is incompatible with the Vite setup.
+- **Preserved Public API**: The public API for toasts remains unchanged. Developers can continue to use:
+    - `toast()` from `@/hooks/use-toast`
+    - `useToast()` from `@/hooks/use-toast`
+    - `<Toaster />` from `@/components/ui/toaster`
+
+### 2. Next.js Artifact Removal
+- **Action**: Completed the migration from Next.js by removing all remaining framework-specific files and dependencies.
+- **Reason**: To finalize the transition to Vite and prevent confusion from leftover build configurations and artifacts.
+
+### 3. Deleted Files
+The following files and dependencies were removed from the project:
+- **Files**:
+    - `app/providers.tsx` (Orphaned Next.js provider)
+    - `src/components/ui/sonner.tsx` (Sonner toast component)
+    - `src/components/ui/use-toast.ts` (Redundant re-export)
+- **Dependencies**:
+    - `next`
+    - `next-themes`
+    - `@next/eslint-plugin-next`
+
 ## Phase 3: Real-time Prediction Streaming (Completed)
 - **Architecture**: Upgraded from polling to Server-Sent Events (SSE) for real-time prediction status and output streaming. This provides a better user experience with instant feedback and is fully compatible with Vercel's serverless environment.
 - **End-to-End Flow**:

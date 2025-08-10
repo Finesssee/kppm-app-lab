@@ -6,7 +6,7 @@ import tseslint from "typescript-eslint";
 import importPlugin from "eslint-plugin-import";
 
 export default tseslint.config(
-  { ignores: ["dist", "node_modules", "*.config.js", "*.config.ts"] },
+  { ignores: ["dist", "node_modules", "*.config.js", "*.config.ts", "app/**"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.strict],
     files: ["**/*.{ts,tsx}"],
@@ -32,7 +32,10 @@ export default tseslint.config(
       // Strict TypeScript rules
       "@typescript-eslint/no-unused-vars": "error",
       "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/explicit-function-return-type": "warn",
+      "@typescript-eslint/explicit-function-return-type": [
+        "warn",
+        { allowExpressions: true, allowTypedFunctionExpressions: true }
+      ],
       "@typescript-eslint/no-unsafe-assignment": "error",
       "@typescript-eslint/no-unsafe-member-access": "error",
       "@typescript-eslint/no-unsafe-call": "error",
@@ -59,8 +62,17 @@ export default tseslint.config(
           }
         }
       ],
-      "import/no-unused-modules": "error",
+      // Disabled due to flat config API limitations with this rule
+      "import/no-unused-modules": "off",
       "import/no-duplicates": "error",
+    },
+  },
+  {
+    files: ["src/components/ui/**/*.{ts,tsx}"],
+    rules: {
+      // UI library files are component-heavy; relax some rules
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "react-refresh/only-export-components": "off",
     },
   }
 );

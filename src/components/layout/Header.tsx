@@ -11,7 +11,7 @@ interface HeaderProps {
   onAddApp?: () => void;
 }
 
-export const Header = ({ onSearch, onAddApp }: HeaderProps) => {
+export const Header = ({ onSearch, onAddApp }: HeaderProps): JSX.Element => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between px-6">
@@ -58,3 +58,5 @@ export const Header = ({ onSearch, onAddApp }: HeaderProps) => {
     </header>
   );
 };
+
+export default Header;
