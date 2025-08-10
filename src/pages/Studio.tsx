@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getWorkspaceFile, listWorkspaceFiles, saveWorkspaceFile } from '../lib/workspaces'
+// Monaco editor dynamic import to keep bundle light
+import Editor from '@monaco-editor/react'
 
 export default function Studio() {
   const [params] = useSearchParams()
@@ -58,7 +60,16 @@ export default function Studio() {
           <div className="text-sm text-muted-foreground">{activePath || 'Select a file to edit'}</div>
           <button disabled={!activePath || loading} onClick={saveFile} className="px-3 py-1 rounded bg-primary text-primary-foreground disabled:opacity-50">Save</button>
         </div>
-        <textarea value={content} onChange={(e)=>setContent(e.target.value)} className="flex-1 p-3 font-mono text-sm outline-none" placeholder="" />
+        <div className="flex-1">
+          <Editor
+            height="100%"
+            defaultLanguage={activePath.endsWith('.ts') || activePath.endsWith('.tsx') ? 'typescript' : 'javascript'}
+            theme="vs-dark"
+            value={content}
+            onChange={(v)=>setContent(v ?? '')}
+            options={{ minimap: { enabled: false }, fontSize: 13 }}
+          />
+        </div>
       </div>
     </div>
   )
