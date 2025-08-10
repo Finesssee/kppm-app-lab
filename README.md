@@ -1,6 +1,6 @@
 # Replicate Hub - AI App Library
 
-A Canva-style, local-only AI app library built with Next.js 14+, TypeScript, and Supabase. Browse, execute, and clone AI applications with dynamic form rendering and Replicate integration.
+A Canva-style, local-only AI app library built with Vite + React (TypeScript) and Supabase. Browse, execute, and clone AI applications with dynamic form rendering and Replicate integration.
 
 ## 🎯 Problem → Gap → Goal
 
@@ -31,12 +31,12 @@ git clone <YOUR_GIT_URL>
 cd replicate-hub
 ```
 
-2. **Copy environment variables**
+2. (Optional) **Copy environment variables**
 ```bash
 cp .env.local.example .env.local
 ```
 
-3. **Configure environment variables** in `.env.local`:
+3. (Optional) **Configure environment variables** in `.env.local` if using Supabase/Replicate:
 ```bash
 # Get from https://replicate.com/account/api-tokens
 REPLICATE_API_TOKEN=r8_your_token_here
@@ -53,33 +53,25 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 # Install dependencies
 npm install
 
-# Start Supabase locally
+# (Optional) If using Supabase locally
 npx supabase start
-
-# Get your local Supabase credentials
-npx supabase status
-
-# Update .env.local with the credentials from above
-
-# Run database migrations
+npx supabase status   # copy URL and keys into .env.local
 npm run db:migrate
-
-# Seed the database with example apps
 npm run db:seed
 
-# Start development server
+# Start development server (Vite)
 npm run dev
 ```
 
-The app will be available at `http://localhost:3000`
+The app will be available at `http://localhost:8080` (or the next free port shown by Vite)
 
 ## 📋 Available Scripts
 
 ```bash
 # Development
-npm run dev             # Start Next.js development server
+npm run dev             # Start Vite dev server
 npm run build           # Build for production
-npm run start           # Start production server
+npm run preview         # Preview production build locally
 
 # Code Quality
 npm run lint            # Run ESLint
@@ -99,7 +91,7 @@ npm run test:e2e        # Run Playwright E2E tests
 ## 🏗️ Architecture
 
 ### Technology Stack
-- **Framework**: Next.js 14+ with App Router
+- **Tooling**: Vite + React (TypeScript)
 - **Language**: TypeScript (strict mode)
 - **Styling**: Tailwind CSS, shadcn/ui
 - **Database**: Supabase (PostgreSQL)
@@ -109,24 +101,13 @@ npm run test:e2e        # Run Playwright E2E tests
 
 ### Project Structure
 ```
-app/                    # Next.js App Router pages
-├── api/               # API routes
-│   ├── apps/         # App search and details
-│   ├── deployments/  # Deployment management
-│   ├── predictions/  # Replicate predictions
-│   └── runs/         # Execution history
 src/
-├── components/        # React components
-│   ├── app-detail/   # App detail page components
-│   ├── app-library/  # Library browsing components
-│   ├── forms/        # Dynamic form system
-│   └── ui/          # shadcn/ui components
-├── lib/              # Utilities and helpers
-│   ├── replicate.ts  # Replicate API connector
-│   ├── schemas.ts    # Zod validation schemas
-│   ├── api-error.ts  # Error handling
-│   └── rate-limit.ts # Rate limiting
-└── types/            # TypeScript definitions
+├── components/        # React components (incl. shadcn/ui)
+├── hooks/             # Custom hooks
+├── lib/               # Utilities and helpers
+├── pages/             # React Router routes
+├── main.tsx           # App entry
+└── index.css          # Styles
 ```
 
 ### Database Schema
@@ -247,7 +228,7 @@ Test coverage targets:
 
 ## 📚 Additional Resources
 
-- [Next.js Documentation](https://nextjs.org/docs)
+- [Vite Documentation](https://vitejs.dev/guide/)
 - [Supabase Documentation](https://supabase.com/docs)
 - [Replicate API Documentation](https://replicate.com/docs)
 - [Tailwind CSS](https://tailwindcss.com/)
