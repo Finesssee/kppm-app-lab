@@ -8,11 +8,15 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 
 import httpx
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from supabase import create_client, Client
+from uuid import uuid4
+from pathlib import Path
+import zipfile
+import io
 from dotenv import load_dotenv
 
 # Initialize FastAPI app
@@ -40,6 +44,19 @@ supabase: Client = create_client(supabase_url, supabase_key)
 # Replicate API configuration
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 REPLICATE_BASE_URL = "https://api.replicate.com/v1"
+
+# Workspace models
+class CreateWorkspaceRequest(BaseModel):
+    source_url: str
+    title: Optional[str] = None
+
+class WorkspaceFile(BaseModel):
+    path: str
+    size: int
+    content_type: Optional[str] = None
+
+STORAGE_ROOT = Path(os.getenv("WORKSPACE_STORAGE", ".workspaces")).resolve()
+STORAGE_ROOT.mkdir(parents=True, exist_ok=True)
 
 # Pydantic models
 class ReplicateRunRequest(BaseModel):
@@ -314,6 +331,77 @@ async def run_template(template_id: str, input_data: Dict[str, Any]):
     )
     
     return await run_replicate_prediction(run_request)
+
+# Workspace endpoints
+@app.post("/api/workspaces")
+async def create_workspace(payload: CreateWorkspaceRequest):
+    """Create a workspace by pulling a zip archive from a URL and unpacking to server storage."""
+    workspace_id = str(uuid4())
+    workspace_dir = STORAGE_ROOT / workspace_id
+    workspace_dir.mkdir(parents=True, exist_ok=True)
+
+    # Pull archive
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(payload.source_url, timeout=120.0)
+        if resp.status_code != 200:
+            raise HTTPException(status_code=400, detail=f"Failed to fetch source archive: {resp.status_code}")
+        data = resp.content
+
+    # Extract safely
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as zf:
+            for member in zf.infolist():
+                # Prevent path traversal
+                member_path = Path(member.filename)
+                if member_path.is_absolute() or ".." in member_path.parts:
+                    continue
+                # Drop the first path segment if archive wraps files in a root folder
+                parts = list(member_path.parts)
+                rel_parts = parts[1:] if len(parts) > 1 else parts
+                out_path = workspace_dir.joinpath(*rel_parts)
+                if member.is_dir():
+                    out_path.mkdir(parents=True, exist_ok=True)
+                else:
+                    out_path.parent.mkdir(parents=True, exist_ok=True)
+                    with zf.open(member) as src, open(out_path, "wb") as dst:
+                        dst.write(src.read())
+    except zipfile.BadZipFile:
+        raise HTTPException(status_code=400, detail="Source is not a valid zip archive")
+
+    return {"id": workspace_id, "title": payload.title or workspace_id}
+
+@app.get("/api/workspaces/{workspace_id}/files")
+async def list_workspace_files(workspace_id: str):
+    root = STORAGE_ROOT / workspace_id
+    if not root.exists():
+        raise HTTPException(status_code=404, detail="Workspace not found")
+    files: List[WorkspaceFile] = []
+    for p in root.rglob("*"):
+        if p.is_file():
+            files.append(WorkspaceFile(path=str(p.relative_to(root)).replace("\\", "/"), size=p.stat().st_size))
+    return {"files": [f.dict() for f in files]}
+
+class FileUpdate(BaseModel):
+    path: str
+    content: str
+
+@app.get("/api/workspaces/{workspace_id}/file")
+async def get_workspace_file(workspace_id: str, path: str):
+    root = STORAGE_ROOT / workspace_id
+    target = (root / path).resolve()
+    if not str(target).startswith(str(root)) or not target.exists() or not target.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    return {"path": path, "content": target.read_text(encoding="utf-8", errors="ignore")}
+
+@app.put("/api/workspaces/{workspace_id}/file")
+async def put_workspace_file(workspace_id: str, payload: FileUpdate):
+    root = STORAGE_ROOT / workspace_id
+    target = (root / payload.path).resolve()
+    if not str(target).startswith(str(root)):
+        raise HTTPException(status_code=400, detail="Invalid path")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(payload.content, encoding="utf-8")
+    return {"ok": True}
 
 if __name__ == "__main__":
     import uvicorn

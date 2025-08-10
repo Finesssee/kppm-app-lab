@@ -9,6 +9,7 @@ import { Toaster } from "./components/ui/toaster";
 import { TooltipProvider } from "./components/ui/tooltip";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Studio from "./pages/Studio";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +30,7 @@ const App: React.FC = () => (
             <Header />
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/studio" element={<Studio />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
